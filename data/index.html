@@ -1,0 +1,36 @@
+<html>
+    <head>
+        <title>Submit Paste</title>
+         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    </head>
+
+    <body><center>
+            <form>
+                </br></br>
+                <textarea id="message" rows="20" cols="80"></textarea> 
+                </br></br>
+                <input type="button" onclick="submitTransaction()" value="Submit">
+            </form>
+            <br><br>
+            <p id="result"></p>
+        </center>
+    </body>
+
+    <script type="text/javascript">
+        function submitTransaction() {
+            var message=$("#message").val();
+            $.ajax({
+                type: "POST",
+                url: "http://localhost:8080/newPaste",
+                data: {message:message},
+                success: function(text) {
+                    $("#result").html("your link is: " + text);
+                },
+                error: function(err) {
+                    alert(err);
+                }
+            });
+        }
+    </script>
+</html>
+

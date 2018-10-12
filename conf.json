@@ -1,0 +1,5 @@
+{
+        "DatabaseHost": "192.168.1.5",
+        "DatabaseUser": "user",
+        "DatabasePass": "pass"
+}
