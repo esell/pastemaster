@@ -128,8 +128,25 @@ func showPasteHandler(db *sql.DB) http.Handler {
 			http.Error(w, "Yikes, something went wrong!", http.StatusInternalServerError)
 			return
 		}
-		//w.Write([]byte(pasteContent))
-		t, _ := template.ParseFiles("show.html")
+
+		afsFile, err := assetFS().Open("show.html")
+		if err != nil {
+			http.Error(w, "Yikes, something went wrong!", http.StatusInternalServerError)
+			return
+		}
+
+		readafsFile, err := ioutil.ReadAll(afsFile)
+		if err != nil {
+			http.Error(w, "Yikes, something went wrong!", http.StatusInternalServerError)
+			return
+		}
+
+		t, err := template.New("foo").Parse(string(readafsFile))
+		if err != nil {
+			http.Error(w, "Yikes, something went wrong!", http.StatusInternalServerError)
+			return
+		}
+
 		t.Execute(w, pasteContent)
 
 	})

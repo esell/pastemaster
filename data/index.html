@@ -21,7 +21,7 @@
             var message=$("#message").val();
             $.ajax({
                 type: "POST",
-                url: "http://localhost:8080/newPaste",
+                url: "/newPaste",
                 data: {message:message},
                 success: function(text) {
                     $("#result").html("your link is: " + text);
