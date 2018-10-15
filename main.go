@@ -25,6 +25,7 @@ type conf struct {
 var (
 	configFile   = flag.String("c", "conf.json", "config file location")
 	parsedconfig = conf{}
+	useSSL       = flag.Bool("s", false, "enable SSL")
 	salt         = "blah"
 )
 
@@ -151,6 +152,17 @@ func showPasteHandler(db *sql.DB) http.Handler {
 
 	})
 }
+
+func getConnString() string {
+	connString := parsedconfig.DatabaseUser + ":" + parsedconfig.DatabasePass + "@tcp(" + parsedconfig.DatabaseHost + ":3306)/"
+	if *useSSL {
+
+		return connString + "?tls=true"
+	}
+
+	return connString
+}
+
 func getRandomInt() int {
 	var n *big.Int
 	max := *big.NewInt(99999999999)
