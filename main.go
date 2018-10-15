@@ -40,7 +40,7 @@ func main() {
 		log.Fatal("unable to marshal config file, exiting...")
 	}
 
-	db, err := sql.Open("mysql", parsedconfig.DatabaseUser+":"+parsedconfig.DatabasePass+"@tcp("+parsedconfig.DatabaseHost+":3306)/")
+	db, err := sql.Open("mysql", getConnString())
 	if err != nil {
 		log.Fatal("error opening db: ", err)
 	}
