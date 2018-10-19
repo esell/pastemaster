@@ -5,11 +5,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"math/big"
 	"net/http"
+	"os"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -32,13 +34,7 @@ var (
 func main() {
 
 	flag.Parse()
-	file, err := ioutil.ReadFile(*configFile)
-	if err != nil {
-		log.Fatal("unable to read config file, exiting...")
-	}
-	if err := json.Unmarshal(file, &parsedconfig); err != nil {
-		log.Fatal("unable to marshal config file, exiting...")
-	}
+	readConfig()
 
 	db, err := sql.Open("mysql", getConnString())
 	if err != nil {
@@ -72,6 +68,24 @@ func main() {
 	http.Handle("/show", showPasteHandler(db))
 	http.Handle("/", http.FileServer(assetFS()))
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func readConfig() {
+	if os.Getenv("PMDBHOST") == "" || os.Getenv("PMDBUSER") == "" || os.Getenv("PMDBPASS") == "" {
+		fmt.Println("env vars not set, looking for config file...")
+
+		file, err := ioutil.ReadFile(*configFile)
+		if err != nil {
+			log.Fatal("unable to read config file, exiting...")
+		}
+		if err := json.Unmarshal(file, &parsedconfig); err != nil {
+			log.Fatal("unable to marshal config file, exiting...")
+		}
+	} else {
+		parsedconfig.DatabaseHost = os.Getenv("PMDBHOST")
+		parsedconfig.DatabaseUser = os.Getenv("PMDBUSER")
+		parsedconfig.DatabasePass = os.Getenv("PMDBPASS")
+	}
 }
 
 func newPasteHandler(db *sql.DB) http.Handler {
