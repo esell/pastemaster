@@ -24,6 +24,11 @@ type conf struct {
 	DatabasePass string
 }
 
+type Page struct {
+	Content string
+	Host    string
+}
+
 var (
 	configFile   = flag.String("c", "conf.json", "config file location")
 	parsedconfig = conf{}
@@ -68,7 +73,8 @@ func main() {
 
 	http.Handle("/newPaste", newPasteHandler(db))
 	http.Handle("/show", showPasteHandler(db))
-	http.Handle("/", http.FileServer(assetFS()))
+	//http.Handle("/", http.FileServer(assetFS()))
+	http.Handle("/", rootHandler())
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
@@ -88,6 +94,30 @@ func readConfig() {
 		parsedconfig.DatabaseUser = os.Getenv("PMDBUSER")
 		parsedconfig.DatabasePass = os.Getenv("PMDBPASS")
 	}
+}
+func rootHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		afsFile, err := assetFS().Open("index.html")
+		if err != nil {
+			http.Error(w, "Yikes, something went wrong!", http.StatusInternalServerError)
+			return
+		}
+
+		readafsFile, err := ioutil.ReadAll(afsFile)
+		if err != nil {
+			http.Error(w, "Yikes, something went wrong!", http.StatusInternalServerError)
+			return
+		}
+
+		t, err := template.New("index").Parse(string(readafsFile))
+		if err != nil {
+			http.Error(w, "Yikes, something went wrong!", http.StatusInternalServerError)
+			return
+		}
+		hostname, _ := os.Hostname()
+		t.Execute(w, hostname)
+	})
+
 }
 
 func newPasteHandler(db *sql.DB) http.Handler {
@@ -125,8 +155,10 @@ func newPasteHandler(db *sql.DB) http.Handler {
 			http.Error(w, "Yikes, something went wrong!", http.StatusInternalServerError)
 			return
 		}
+
 		// return link
 		w.Write([]byte(ref))
+
 	})
 }
 
@@ -140,11 +172,14 @@ func showPasteHandler(db *sql.DB) http.Handler {
 
 		stmt, err := db.Prepare("SELECT content FROM p WHERE link = ?")
 		var pasteContent string
+		tempData := make(map[string]string)
 		err = stmt.QueryRow(recID).Scan(&pasteContent)
 		if err != nil {
 			http.Error(w, "Yikes, something went wrong!", http.StatusInternalServerError)
 			return
 		}
+		tempData["paste"] = pasteContent
+		tempData["hostname"], _ = os.Hostname()
 
 		afsFile, err := assetFS().Open("show.html")
 		if err != nil {
@@ -158,13 +193,13 @@ func showPasteHandler(db *sql.DB) http.Handler {
 			return
 		}
 
-		t, err := template.New("foo").Parse(string(readafsFile))
+		t, err := template.New("show").Parse(string(readafsFile))
 		if err != nil {
 			http.Error(w, "Yikes, something went wrong!", http.StatusInternalServerError)
 			return
 		}
 
-		t.Execute(w, pasteContent)
+		t.Execute(w, tempData)
 
 	})
 }
