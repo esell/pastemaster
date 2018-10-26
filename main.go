@@ -42,6 +42,8 @@ func main() {
 	}
 	defer db.Close()
 
+	db.SetConnMaxLifetime(time.Second * 50)
+
 	// verify connection
 	err = db.Ping()
 	if err != nil {
